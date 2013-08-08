@@ -474,9 +474,15 @@ class EvalPropContext(object):
             if isinstance(argument, two.execute.PropertyProxyMixin):
                 return two.execute.BoundPropertyProxy(argument, key)
             raise ExecSandboxException('%s.%s: setattr not allowed' % (type(argument).__name__, key))
+        if nodtyp is ast.Tuple:
+            return_val = list()
+            for element in nod.elts:
+                eval_element = yield self.execcode_expr_store(element)
+                return_val.append(eval_element)
+            return tuple(return_val)
         raise NotImplementedError('Script store-expression type not implemented: %s' % (nodtyp.__name__,))
-        
-        
+
+
     @tornado.gen.coroutine
     def execcode_expr(self, nod, baresymbol=False):
         self.task.tick()

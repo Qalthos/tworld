@@ -844,7 +844,19 @@ class EvalPropContext(object):
 
         for target in targets:
             target = yield self.execcode_expr_store(target)
-            yield target.store(self, self.loctx, val)
+
+            if isinstance(target, tuple):
+                print(target)
+                try:
+                    if len(target) == len(val):
+                        for single_target, single_value in zip(target, val):
+                            yield single_target.store(self, self.loctx, single_value)
+                    else:
+                        raise Exception("Number of targets does not match number of values.")
+                except TypeError:
+                    raise Exception("Attempting to assing single value to sequence.")
+            else:
+                yield target.store(self, self.loctx, val)
         return None
 
     @tornado.gen.coroutine

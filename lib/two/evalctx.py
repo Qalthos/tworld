@@ -830,15 +830,15 @@ class EvalPropContext(object):
         else:
             val = yield self.execcode_expr(nod.value)
         raise ReturnException(returnvalue=val)
-        
+
     @tornado.gen.coroutine
     def execcode_assign(self, nod):
-        if len(nod.targets) != 1:
-            raise NotImplementedError('Script assignment has more than one target')
-        target = yield self.execcode_expr_store(nod.targets[0])
+        targets = nod.targets
         val = yield self.execcode_expr(nod.value)
 
-        yield target.store(self, self.loctx, val)
+        for target in targets:
+            target = yield self.execcode_expr_store(target)
+            yield target.store(self, self.loctx, val)
         return None
 
     @tornado.gen.coroutine

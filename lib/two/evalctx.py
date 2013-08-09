@@ -842,9 +842,13 @@ class EvalPropContext(object):
         targets = nod.targets
         val = yield self.execcode_expr(nod.value)
 
+        # An assignment statement can have multiple targets:
+        # >>> a = b = 3
+        # a & b are targets w/ value 3
         for target in targets:
             target = yield self.execcode_expr_store(target)
 
+            # It is also possible to assign to a tuple of targets.
             if isinstance(target, tuple):
                 try:
                     if len(target) == len(val):

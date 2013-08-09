@@ -94,7 +94,7 @@ class EvalPropContext(object):
         """
         EvalPropContext.link_code_counter = EvalPropContext.link_code_counter + 1
         return str(EvalPropContext.link_code_counter) + hex(random.getrandbits(32))[2:]
-    
+
     def __init__(self, task, parent=None, loctx=None, parentdepth=0, forbid=None, level=LEVEL_MESSAGE):
         """Caller must provide either parent (an EvalPropContext) or
         a loctx and parentdepth. If there is an effective parent context,
@@ -111,7 +111,7 @@ class EvalPropContext(object):
 
         assert (parent or loctx)
         assert not (parent and loctx)
-        
+
         if parent is not None:
             assert self.task == parent.task
             self.parentdepth = parent.parentdepth + parent.depth + 1
@@ -153,7 +153,7 @@ class EvalPropContext(object):
         raise Exception('EvalPropContext.depth is immutable')
 
     def updateacdepends(self, ctx):
-        """Merge in the actions and dependencies from a subcontext.        
+        """Merge in the actions and dependencies from a subcontext.
         """
         assert self.accum is not None, 'EvalPropContext.accum should not be None here'
         if ctx.linktargets:
@@ -175,7 +175,7 @@ class EvalPropContext(object):
         The locals dict is used "live", not copied.
 
         This is the top-level entry point to Doing Stuff in this context.
-        
+
         After the call, dependencies will contain the symbol (and any
         others checked when putting together the result).
 
@@ -201,7 +201,7 @@ class EvalPropContext(object):
         self.task.tick()
         if not (self.caps & EVALCAP_RUN):
             raise Exception('EvalPropContext does not have permissions to do anything!')
-        
+
         # Initialize per-invocation fields.
         self.accum = None
         self.linktargets = None
@@ -224,7 +224,7 @@ class EvalPropContext(object):
 
         # At this point, if the value was a {text}, the accum will contain
         # the desired description.
-        
+
         if (self.level == LEVEL_RAW):
             return res
         if (self.level == LEVEL_FLAT):
@@ -251,7 +251,7 @@ class EvalPropContext(object):
                 return self.accum
             return res
         raise Exception('unrecognized eval level: %d' % (self.level,))
-        
+
     @tornado.gen.coroutine
     def evalobj(self, key, evaltype=EVALTYPE_SYMBOL, locals=None):
         """Look up a symbol, adding it to the accumulated content. If the
@@ -269,7 +269,7 @@ class EvalPropContext(object):
         happens and the stack is left alone.
         """
         self.task.tick()
-        
+
         if evaltype == EVALTYPE_SYMBOL:
             origkey = key
             res = yield two.symbols.find_symbol(self.app, self.loctx, key, dependencies=self.dependencies)
@@ -293,7 +293,7 @@ class EvalPropContext(object):
             assert self.accum is None, 'EvalPropContext.accum should be None at depth zero'
             self.accum = []
             self.linktargets = {}
-        
+
         if self.depth == 0 and self.level == LEVEL_DISPSPECIAL and objtype == 'selfdesc':
             assert self.accum is not None, 'EvalPropContext.accum should not be None here'
             try:
@@ -319,7 +319,7 @@ class EvalPropContext(object):
             except Exception as ex:
                 self.task.log.warning('Caught exception (selfdesc): %s', ex, exc_info=self.app.debugstacktraces)
                 return '[Exception: %s]' % (ex,)
-                
+
         if self.depth == 0 and self.level == LEVEL_DISPSPECIAL and objtype == 'editstr':
             assert self.accum is not None, 'EvalPropContext.accum should not be None here'
             try:
@@ -418,7 +418,7 @@ class EvalPropContext(object):
             originlabel = '"%.20s"' % (originlabel,)
         else:
             originlabel = '<script>'
-            
+
         tree = ast.parse(text, filename=originlabel)
         assert type(tree) is ast.Module
 
@@ -571,7 +571,7 @@ class EvalPropContext(object):
         ast.UAdd: operator.pos,
         ast.USub: operator.neg,
         }
-        
+
     @tornado.gen.coroutine
     def execcode_unaryop(self, nod):
         optyp = type(nod.op)
@@ -597,7 +597,7 @@ class EvalPropContext(object):
         ast.LShift: operator.lshift,
         ast.RShift: operator.rshift,
         }
-        
+
     @tornado.gen.coroutine
     def execcode_binop(self, nod):
         optyp = type(nod.op)
@@ -607,7 +607,7 @@ class EvalPropContext(object):
         if not opfunc:
             raise NotImplementedError('Script binop type not implemented: %s' % (optyp.__name__,))
         return opfunc(leftval, rightval)
-        
+
     @tornado.gen.coroutine
     def execcode_boolop(self, nod):
         optyp = type(nod.op)
@@ -640,7 +640,7 @@ class EvalPropContext(object):
         ast.In: lambda x,y:(x in y),
         ast.NotIn: lambda x,y:(x not in y),
         }
-    
+
     @tornado.gen.coroutine
     def execcode_compare(self, nod):
         leftval = yield self.execcode_expr(nod.left)
@@ -655,7 +655,7 @@ class EvalPropContext(object):
                 return res
             leftval = rightval
         return True
-        
+
     @tornado.gen.coroutine
     def execcode_attribute(self, nod):
         argument = yield self.execcode_expr(nod.value)
@@ -714,17 +714,17 @@ class EvalPropContext(object):
         ### Special case for {code} dicts...
         # This will raise TypeError if funcval is not callable.
         return funcval(*args, **kwargs)
-        
+
     @tornado.gen.coroutine
     def execcode_name(self, nod, baresymbol=False):
         symbol = nod.id
         res = yield two.symbols.find_symbol(self.app, self.loctx, symbol, locals=self.frame.locals, dependencies=self.dependencies)
-        
+
         if not baresymbol:
             return res
         if type(res) is not dict:
             return res
-        
+
         restype = res.get('type', None)
         uid = self.uid
 
@@ -744,7 +744,7 @@ class EvalPropContext(object):
                 return newval
             # All other special objects are returned as-is.
             return res
-        
+
         if restype in ('text', 'selfdesc', 'editstr'):
             # Set focus to this symbol-name
             yield motor.Op(self.app.mongodb.playstate.update,
@@ -758,7 +758,7 @@ class EvalPropContext(object):
             plistid = res.get('plistid', None)
             if not plistid:
                 raise ErrorMessageException('portlist property has no plistid')
-            
+
             level = yield two.execute.scope_access_level(self.app, self.uid, self.loctx.wid, self.loctx.scid)
             if level < res.get('readaccess', ACC_VISITOR):
                 raise MessageException(self.app.localize('message.widget_no_access'))
@@ -828,7 +828,7 @@ class EvalPropContext(object):
         for nod in body:
             res = yield self.execcode_statement(nod)
         return res
-        
+
     @tornado.gen.coroutine
     def execcode_return(self, nod):
         if nod.value is None:
@@ -846,7 +846,6 @@ class EvalPropContext(object):
             target = yield self.execcode_expr_store(target)
 
             if isinstance(target, tuple):
-                print(target)
                 try:
                     if len(target) == len(val):
                         for single_target, single_value in zip(target, val):
@@ -870,7 +869,7 @@ class EvalPropContext(object):
 
         leftval = yield target.load(self, self.loctx)
         val = opfunc(leftval, rightval)
-        
+
         yield target.store(self, self.loctx, val)
         return None
 
@@ -886,9 +885,9 @@ class EvalPropContext(object):
         """Evaluate a bunch of (already-looked-up) interpolation markup.
         """
         self.task.tick()
-        
+
         nodls = interp.parse(text)
-        
+
         # While trawling through nodls, we may encounter $if/$end
         # nodes. This keeps track of them. Specifically: a 0 value
         # means "within a true conditional"; 1 means "within a
@@ -898,14 +897,14 @@ class EvalPropContext(object):
         # We suppress output if any value in suppstack is nonzero.
         # It's easiest to track sum(suppstack), so that's what this is.
         suppressed = 0
-        
+
         for nod in nodls:
             if not (isinstance(nod, interp.InterpNode)):
                 # String.
                 if nod and not suppressed:
                     self.accum.append(nod)
                 continue
-            
+
             nodkey = nod.classname
             # This switch statement might be better off as a method
             # lookup table. But only if it gets long.
@@ -927,7 +926,7 @@ class EvalPropContext(object):
                     suppstack.append(1)
                     suppressed += 1
                 continue
-                    
+
             if nodkey == 'ElIf':
                 if len(suppstack) == 0:
                     self.accum.append('[$elif without matching $if]')
@@ -953,7 +952,7 @@ class EvalPropContext(object):
                     suppstack[-1] = 1
                 suppressed = sum(suppstack)
                 continue
-                    
+
             if nodkey == 'End':
                 if len(suppstack) == 0:
                     self.accum.append('[$end without matching $if]')
@@ -979,7 +978,7 @@ class EvalPropContext(object):
             # state.
             if suppressed:
                 continue
-            
+
             if nodkey == 'Link':
                 if not nod.external:
                     ackey = EvalPropContext.build_action_key()
@@ -988,7 +987,7 @@ class EvalPropContext(object):
                 else:
                     self.accum.append( ['exlink', nod.target] )
                 continue
-            
+
             if nodkey == 'Interpolate':
                 try:
                     subres = yield self.evalobj(nod.expr, evaltype=EVALTYPE_CODE)
@@ -1003,7 +1002,7 @@ class EvalPropContext(object):
                     # a string.
                     self.accum.append(str(subres))
                 continue
-            
+
             if nodkey == 'PlayerRef':
                 if nod.expr:
                     uid = yield self.evalobj(nod.expr, evaltype=EVALTYPE_CODE)
@@ -1013,7 +1012,7 @@ class EvalPropContext(object):
                         uid = ObjectId(uid)
                 else:
                     uid = self.uid
-                    
+
                 player = yield motor.Op(self.app.mongodb.players.find_one,
                                         {'_id':uid},
                                         {'name':1, 'pronoun':1})
@@ -1085,7 +1084,7 @@ class EvalPropContext(object):
                                 {'_id':self.uid},
                                 {'name':1})
         playername = player['name']
-                
+
         # If the location has an on_leave property, run it.
         try:
             leavehook = yield two.symbols.find_symbol(self.app, self.loctx, 'on_leave')
@@ -1100,7 +1099,7 @@ class EvalPropContext(object):
             except Exception as ex:
                 self.task.log.warning('Caught exception (leaving loc, move): %s', ex, exc_info=self.app.debugstacktraces)
             ctx = None
-            
+
         msg = oleave
         if msg is None:
             msg = self.app.localize('action.oleave') % (playername,) # '%s leaves.'
@@ -1126,7 +1125,7 @@ class EvalPropContext(object):
             self.task.set_data_change( ('populace', self.loctx.iid, lastlocid) )
         self.task.set_data_change( ('populace', self.loctx.iid, locid) )
         self.task.clear_loctx(self.uid)
-        
+
         msg = oarrive
         if msg is None:
             msg = self.app.localize('action.oarrive') % (playername,) # '%s arrives.'
@@ -1137,7 +1136,7 @@ class EvalPropContext(object):
             others = yield self.task.find_locale_players(notself=True)
             if others:
                 self.task.write_event(others, msg)
-                
+
         msg = text
         if msg:
             if texteval:
@@ -1164,7 +1163,7 @@ class EvalPropContext(object):
             except Exception as ex:
                 self.task.log.warning('Caught exception (entering loc, move): %s', ex, exc_info=self.app.debugstacktraces)
 
-                
+
 def str_or_null(res):
     if res is None:
         return ''

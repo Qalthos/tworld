@@ -850,16 +850,13 @@ class EvalPropContext(object):
             target = yield self.execcode_expr_store(target)
 
             # It is also possible to assign to a tuple of targets.
-            if isinstance(target, tuple):
-                if isinstance(val, collections.Sequence):
-                    # value has __len__() and __iter__()
-                    if len(target) == len(val):
-                        for single_target, single_value in zip(target, val):
-                            yield single_target.store(self, self.loctx, single_value)
-                    else:
-                        raise Exception("Number of targets does not match number of values.")
+            if isinstance(target, tuple) and isinstance(val, collections.Sequence):
+                # collections.Sequence subclasses have __len__() and __iter__()
+                if len(target) == len(val):
+                    for single_target, single_value in zip(target, val):
+                        yield single_target.store(self, self.loctx, single_value)
                 else:
-                    raise Exception("Attempting to assing single value to sequence.")
+                    raise Exception("Number of targets does not match number of values.")
             else:
                 yield target.store(self, self.loctx, val)
         return None

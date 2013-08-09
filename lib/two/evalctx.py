@@ -5,6 +5,7 @@ of TworldPy lives in the EvalPropContext module.
 
 import random
 import ast
+import collections
 import operator
 
 import tornado.gen
@@ -850,13 +851,14 @@ class EvalPropContext(object):
 
             # It is also possible to assign to a tuple of targets.
             if isinstance(target, tuple):
-                try:
+                if isinstance(val, collections.Sequence):
+                    # value has __len__() and __iter__()
                     if len(target) == len(val):
                         for single_target, single_value in zip(target, val):
                             yield single_target.store(self, self.loctx, single_value)
                     else:
                         raise Exception("Number of targets does not match number of values.")
-                except TypeError:
+                else:
                     raise Exception("Attempting to assing single value to sequence.")
             else:
                 yield target.store(self, self.loctx, val)
